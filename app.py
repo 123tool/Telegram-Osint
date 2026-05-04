@@ -1,62 +1,69 @@
 import os
 import requests
 from flask import Flask, render_template, request, jsonify
-from colorama import Fore, init
 
-init(autoreset=True)
 app = Flask(__name__)
 
-# SPY-E
-VERSION = "1.0.0"
-BRAND = "OSINT TELEGRAM"
+# Mock Database untuk simulasi riwayat (karena API resmi tidak ada)
+# Di dunia nyata, ini akan menembak ke API OSINT luar atau database lokal kamu
+MOCK_HISTORY = {
+    "12345678": ["@old_user1", "@old_user2", "@current_user"],
+    "8097908138": ["@demo_v1", "@demo_beta", "@DemoWebsBot"]
+}
 
-def validate_bot(token):
-    """Fungsi inti untuk inspeksi Bot Telegram"""
-    url = f"https://api.telegram.org/bot{token}/getMe"
+def get_owner_info(token):
+    """Mencoba melacak owner melalui interaksi pertama atau konfigurasi admin"""
+    url = f"https://api.telegram.org/bot{token}/getUpdates"
     try:
         response = requests.get(url, timeout=10).json()
-        if response.get("ok"):
-            res = response["result"]
-            # Mendapatkan data updates untuk Chat ID
-            updates_url = f"https://api.telegram.org/bot{token}/getUpdates"
-            updates = requests.get(updates_url, timeout=10).json()
-            
-            recent_chats = []
-            if updates.get("ok"):
-                for up in updates["result"]:
-                    msg = up.get("message", {})
-                    chat = msg.get("chat", {})
-                    if chat and chat not in recent_chats:
-                        recent_chats.append(chat)
-
-            return {
-                "status": "valid",
-                "id": res["id"],
-                "name": res["first_name"],
-                "username": res["username"],
-                "link": f"https://t.me/{res['username']}",
-                "can_groups": res.get("can_join_groups", False),
-                "recent_chats": recent_chats[:5] # Ambil 5 interaksi terakhir
-            }
-        return {"status": "invalid", "msg": response.get("description")}
-    except Exception as e:
-        return {"status": "error", "msg": str(e)}
+        if response.get("ok") and response["result"]:
+            # Biasanya pesan pertama (indeks 0) berasal dari pembuat bot saat testing
+            first_msg = response["result"][0].get("message", {})
+            from_user = first_msg.get("from", {})
+            if from_user:
+                return {
+                    "owner_id": from_user.get("id"),
+                    "owner_user": f"@{from_user.get('username')}" if from_user.get('username') else "N/A",
+                    "owner_name": from_user.get("first_name", "N/A")
+                }
+        return {"owner_id": "Unknown", "owner_user": "Hidden/Not Found", "owner_name": "Unknown"}
+    except:
+        return {"owner_id": "Error", "owner_user": "Error", "owner_name": "Error"}
 
 @app.route('/')
 def index():
-    return render_template('index.html', version=VERSION, brand=BRAND)
+    return render_template('index.html')
 
 @app.route('/inspect', methods=['POST'])
 def inspect():
     token = request.form.get('token')
-    if not token:
-        return jsonify({"status": "error", "msg": "Token is required"})
+    url = f"https://api.telegram.org/bot{token}/getMe"
     
-    result = validate_bot(token)
-    return jsonify(result)
+    try:
+        res = requests.get(url).json()
+        if res.get("ok"):
+            bot_data = res["result"]
+            owner = get_owner_info(token) # Panggil fungsi pelacak owner
+            
+            return jsonify({
+                "status": "success",
+                "bot_id": bot_data["id"],
+                "name": bot_data["first_name"],
+                "username": f"@{bot_data['username']}",
+                "owner_id": owner["owner_id"],
+                "owner_user": owner["owner_user"],
+                "owner_name": owner["owner_name"]
+            })
+        return jsonify({"status": "error", "msg": "Invalid Token"})
+    except Exception as e:
+        return jsonify({"status": "error", "msg": str(e)})
+
+@app.route('/history', methods=['POST'])
+def history():
+    user_id = request.form.get('user_id')
+    # Simulasi pencarian riwayat berdasarkan ID Akun
+    history_data = MOCK_HISTORY.get(str(user_id), ["No history found for this ID"])
+    return jsonify({"status": "success", "history": history_data})
 
 if __name__ == '__main__':
-    # Menjalankan di Localhost / Anonymous IP
-    print(f"{Fore.CYAN}[*] {BRAND} Starting...")
-    print(f"{Fore.GREEN}[+] Web UI: http://127.0.0.1:5000")
     app.run(host='0.0.0.0', port=5000, debug=True)

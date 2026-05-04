@@ -1,0 +1,101 @@
+:root {
+    --bg-color: #0d0d0d;
+    --accent-color: #ff0000; /* Merah Cyberpunk */
+    --card-bg: rgba(255, 255, 255, 0.05);
+    --border-color: #ffffff;
+    --text-color: #ffffff;
+}
+
+body {
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    font-family: 'Courier New', Courier, monospace;
+    margin: 0;
+    padding: 20px;
+    display: flex;
+    justify-content: center;
+}
+
+.container {
+    max-width: 800px;
+    width: 100%;
+}
+
+header h1 {
+    font-size: 3rem;
+    text-transform: uppercase;
+    margin-bottom: 0;
+    text-shadow: 4px 4px 0px var(--accent-color);
+}
+
+header p {
+    margin-top: 10px;
+    font-weight: bold;
+}
+
+header span {
+    color: var(--accent-color);
+}
+
+.card {
+    background: var(--card-bg);
+    backdrop-filter: blur(10px);
+    border: 3px solid var(--border-color);
+    padding: 20px;
+    margin-top: 25px;
+    box-shadow: 8px 8px 0px var(--border-color);
+    transition: transform 0.2s;
+}
+
+.card:hover {
+    transform: translate(-2px, -2px);
+    box-shadow: 10px 10px 0px var(--accent-color);
+}
+
+input[type="text"] {
+    width: 100%;
+    background: transparent;
+    border: 2px solid var(--border-color);
+    color: white;
+    padding: 15px;
+    font-size: 1.1rem;
+    box-sizing: border-box;
+    margin-bottom: 15px;
+}
+
+button {
+    width: 100%;
+    background: var(--accent-color);
+    color: white;
+    border: 2px solid var(--border-color);
+    padding: 15px;
+    font-weight: bold;
+    cursor: pointer;
+    text-transform: uppercase;
+    box-shadow: 4px 4px 0px var(--border-color);
+}
+
+button:active {
+    box-shadow: none;
+    transform: translate(2px, 2px);
+}
+
+#result-area h2 {
+    border-bottom: 2px solid var(--accent-color);
+    padding-bottom: 10px;
+}
+
+ul {
+    list-style: none;
+    padding: 0;
+}
+
+li {
+    background: rgba(255, 255, 255, 0.1);
+    margin: 10px 0;
+    padding: 10px;
+    border-left: 5px solid var(--accent-color);
+}
+
+a { color: var(--accent-color); text-decoration: none; }
+footer { margin-top: 50px; opacity: 0.6; font-size: 0.8rem; }

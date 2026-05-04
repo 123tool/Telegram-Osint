@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ brand }} - OSINT TELEGRAM</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>{{ brand }}</h1>
+            <p>Advanced Bot Inspector by <span>SPY-E</span></p>
+        </header>
+
+        <div class="card main-input">
+            <input type="text" id="token" placeholder="Enter Bot Token (e.g. 123456:ABC-DEF...)">
+            <button onclick="startInspection()">INSPECT BOT</button>
+        </div>
+
+        <div id="result-area" style="display: none;">
+            <div class="card result-card">
+                <h2>BOT METADATA</h2>
+                <div id="bot-info"></div>
+            </div>
+            
+            <div class="card chat-card">
+                <h2>RECENT INTERACTIONS (CHAT ID)</h2>
+                <ul id="chat-list"></ul>
+            </div>
+        </div>
+
+        <footer>
+            <p>Version {{ version }} | System: Xubuntu/Termux Ready</p>
+        </footer>
+    </div>
+
+    <script>
+        async function startInspection() {
+            const token = document.getElementById('token').value;
+            const resArea = document.getElementById('result-area');
+            const info = document.getElementById('bot-info');
+            const chatList = document.getElementById('chat-list');
+
+            const response = await fetch('/inspect', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: `token=${token}`
+            });
+            const data = await response.json();
+
+            if (data.status === 'valid') {
+                resArea.style.display = 'block';
+                info.innerHTML = `
+                    <p><strong>Bot ID:</strong> ${data.id}</p>
+                    <p><strong>Name:</strong> ${data.name}</p>
+                    <p><strong>Username:</strong> @${data.username}</p>
+                    <p><strong>URL:</strong> <a href="${data.link}" target="_blank">${data.link}</a></p>
+                `;
+                chatList.innerHTML = data.recent_chats.map(c => 
+                    `<li>ID: ${c.id} | Type: ${c.type} | Name: ${c.first_name || 'N/A'}</li>`
+                ).join('');
+            } else {
+                alert("Error: " + data.msg);
+            }
+        }
+    </script>
+</body>
+</html>

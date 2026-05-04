@@ -3,65 +3,82 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ brand }} - OSINT TELEGRAM</title>
-    <link rel="stylesheet" href="/static/style.css">
+    <title>OSINT TELEGRAM - SPY-E</title>
+    <!-- Memanggil CSS Terpisah -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
     <div class="container">
         <header>
-            <h1>{{ brand }}</h1>
+            <h1>OSINT<br>TELEGRAM</h1>
             <p>Advanced Bot Inspector by <span>SPY-E</span></p>
         </header>
 
-        <div class="card main-input">
-            <input type="text" id="token" placeholder="Enter Bot Token (e.g. 123456:ABC-DEF...)">
+        <div class="card">
+            <input type="text" id="token" placeholder="Enter Bot Token...">
             <button onclick="startInspection()">INSPECT BOT</button>
         </div>
 
-        <div id="result-area" style="display: none;">
-            <div class="card result-card">
-                <h2>BOT METADATA</h2>
-                <div id="bot-info"></div>
-            </div>
-            
-            <div class="card chat-card">
-                <h2>RECENT INTERACTIONS (CHAT ID)</h2>
-                <ul id="chat-list"></ul>
+        <div id="bot-result" style="display: none;">
+            <div class="card">
+                <h2>BOT & POTENTIAL OWNER</h2>
+                <div id="bot-info-display"></div>
             </div>
         </div>
 
+        <div class="card">
+            <h2>USERNAME HISTORY TRACKER</h2>
+            <input type="text" id="user_id_input" placeholder="Enter Account ID (e.g. 8097908138)">
+            <button onclick="checkHistory()" style="background: #00ff00; color: black;">TRACK HISTORY</button>
+            <div id="history-display" style="margin-top: 15px;"></div>
+        </div>
+
         <footer>
-            <p>Version {{ version }} | System: Xubuntu/Termux Ready</p>
+            Version 1.0.0 | System: Xubuntu/Termux Ready | Developed by SPY-E
         </footer>
     </div>
 
     <script>
         async function startInspection() {
             const token = document.getElementById('token').value;
-            const resArea = document.getElementById('result-area');
-            const info = document.getElementById('bot-info');
-            const chatList = document.getElementById('chat-list');
-
+            const display = document.getElementById('bot-info-display');
+            document.getElementById('bot-result').style.display = "block";
+            
             const response = await fetch('/inspect', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                body: `token=${token}`
+                body: `token=${encodeURIComponent(token)}`
             });
             const data = await response.json();
 
-            if (data.status === 'valid') {
-                resArea.style.display = 'block';
-                info.innerHTML = `
-                    <p><strong>Bot ID:</strong> ${data.id}</p>
-                    <p><strong>Name:</strong> ${data.name}</p>
-                    <p><strong>Username:</strong> @${data.username}</p>
-                    <p><strong>URL:</strong> <a href="${data.link}" target="_blank">${data.link}</a></p>
-                `;
-                chatList.innerHTML = data.recent_chats.map(c => 
-                    `<li>ID: ${c.id} | Type: ${c.type} | Name: ${c.first_name || 'N/A'}</li>`
-                ).join('');
+            if (data.status === 'success') {
+                display.innerHTML = `
+                    <p><strong>BOT ID:</strong> ${data.bot_id}</p>
+                    <p><strong>USERNAME:</strong> ${data.username}</p>
+                    <div class="owner-found">
+                        <p>POTENTIAL OWNER DETECTED:</p>
+                        <p>ID: ${data.owner_id} | USER: ${data.owner_user}</p>
+                    </div>`;
             } else {
-                alert("Error: " + data.msg);
+                display.innerHTML = `<p style="color:red;">Error: ${data.msg}</p>`;
+            }
+        }
+
+        async function checkHistory() {
+            const userId = document.getElementById('user_id_input').value;
+            const historyDisplay = document.getElementById('history-display');
+
+            const response = await fetch('/history', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: `user_id=${encodeURIComponent(userId)}`
+            });
+            const data = await response.json();
+            
+            if (data.status === 'success') {
+                let html = '<ul class="history-list">';
+                data.history.forEach(u => html += `<li>${u}</li>`);
+                historyDisplay.innerHTML = html + '</ul>';
             }
         }
     </script>
